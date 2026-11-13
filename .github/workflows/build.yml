@@ -1,0 +1,47 @@
+name: Build Soca Chords
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -G Xcode
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Package
+        run: |
+          mkdir out
+          cp -R "build/SocaChords_artefacts/Release/VST3/Soca Chords.vst3" out/
+          cp -R "build/SocaChords_artefacts/Release/AU/Soca Chords.component" out/
+          cp -R "build/SocaChords_artefacts/Release/Standalone/Soca Chords.app" out/
+          cp README.md out/
+          ditto -c -k out SocaChords-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SocaChords-macOS
+          path: SocaChords-macOS.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory out | Out-Null
+          Copy-Item -Recurse "build/SocaChords_artefacts/Release/VST3/Soca Chords.vst3" out/
+          Copy-Item "build/SocaChords_artefacts/Release/Standalone/Soca Chords.exe" out/
+          Copy-Item README.md out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SocaChords-Windows
+          path: out
